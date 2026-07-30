@@ -21,6 +21,61 @@ if (API_KEY) {
   axios.defaults.headers.common["x-api-key"] = API_KEY;
 }
 
+axios.interceptors.request.use(function (config) {
+  console.log("request started");
+
+  config.requestStart = Date.now();
+  progressBar.style.width = "0%";
+  document.body.style.cursor = "progress";
+
+  return config;
+});
+
+axios.interceptors.response.use(
+  function (response) {
+    const requestTime = Date.now() - response.config.requestStart;
+    console.log(`request finished in ${requestTime} milliseconds`);
+
+    progressBar.style.width = "100%";
+    document.body.style.cursor = "default";
+
+    return response;
+  },
+  function (error) {
+    if (error.config && error.config.requestStart) {
+      const requestTime = Date.now() - error.config.requestStart;
+      console.log(`request failed after ${requestTime} milliseconds`);
+    } else {
+      console.log("request failed");
+    }
+
+    progressBar.style.width = "0%";
+    document.body.style.cursor = "default";
+
+    return Promise.reject(error);
+  }
+);
+
+function updateProgress(progressEvent) {
+  console.log("download progress:", progressEvent);
+
+  let percent = 0;
+
+  if (progressEvent.total) {
+    percent = Math.round(
+      (progressEvent.loaded / progressEvent.total) * 100
+    );
+  } else if (typeof progressEvent.progress === "number") {
+    percent = Math.round(progressEvent.progress * 100);
+  }
+
+  if (!Number.isFinite(percent)) {
+    percent = 0;
+  }
+
+  progressBar.style.width = `${percent}%`;
+}
+
 async function initialLoad() {
   try {
     const response = await axios.get("/breeds");
@@ -126,7 +181,8 @@ async function loadBreedImages() {
       params: {
         limit: 10,
         breed_ids: breedId
-      }
+      },
+      onDownloadProgress: updateProgress
     });
 
     const images = response.data;
