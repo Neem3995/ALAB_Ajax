@@ -12,6 +12,7 @@ const getFavouritesBtn = document.getElementById("getFavouritesBtn");
 
 // Step 0: Load the API key from the local .env file.
 const API_KEY = process.env.CAT_API_KEY || "";
+let breedList = [];
 
 /**
  * 1. Create an async function "initialLoad" that does the following:
@@ -38,15 +39,15 @@ async function initialLoad() {
       throw new Error(`Cat API request failed with status ${response.status}`);
     }
 
-    const breeds = await response.json();
+    breedList = await response.json();
 
     // clearing the dropdown before adding all of the cat breeds
     breedSelect.innerHTML = "";
 
-    for (let i = 0; i < breeds.length; i++) {
+    for (let i = 0; i < breedList.length; i++) {
       const option = document.createElement("option");
-      option.value = breeds[i].id;
-      option.textContent = breeds[i].name;
+      option.value = breedList[i].id;
+      option.textContent = breedList[i].name;
       breedSelect.appendChild(option);
     }
 
@@ -74,10 +75,11 @@ initialLoad();
  */
 function buildCarousel(images) {
   Carousel.clear();
+  let validImageCount = 0;
 
   for (let i = 0; i < images.length; i++) {
     // making sure the image has everything the carousel needs
-    if (images[i].url && images[i].id) {
+    if (images[i] && images[i].url && images[i].id) {
       const carouselItem = Carousel.createCarouselItem(
         images[i].url,
         "A cat from The Cat API",
@@ -85,10 +87,70 @@ function buildCarousel(images) {
       );
 
       Carousel.appendCarousel(carouselItem);
+      validImageCount++;
     }
   }
 
-  Carousel.start();
+  if (validImageCount > 0) {
+    Carousel.start();
+  }
+
+  return validImageCount;
+}
+
+function getSelectedBreed(images) {
+  // first checking the image response for breed information
+  if (images.length > 0 && images[0].breeds && images[0].breeds.length > 0) {
+    return images[0].breeds[0];
+  }
+
+  // using the original breed list if the image response is missing it
+  for (let i = 0; i < breedList.length; i++) {
+    if (breedList[i].id === breedSelect.value) {
+      return breedList[i];
+    }
+  }
+
+  return null;
+}
+
+function addBreedDetail(label, value) {
+  const paragraph = document.createElement("p");
+  paragraph.textContent = `${label}: ${value || "Not available"}`;
+  infoDump.appendChild(paragraph);
+}
+
+function displayBreedInfo(breed, imageCount) {
+  infoDump.innerHTML = "";
+
+  if (breed) {
+    const heading = document.createElement("h3");
+    heading.textContent = breed.name || "Unknown breed";
+    infoDump.appendChild(heading);
+
+    let weight = "Not available";
+    if (breed.weight && breed.weight.imperial) {
+      weight = `${breed.weight.imperial} lbs`;
+    }
+
+    addBreedDetail("Origin", breed.origin);
+    addBreedDetail("Temperament", breed.temperament);
+    addBreedDetail("Description", breed.description);
+    addBreedDetail("Life span", breed.life_span);
+    addBreedDetail("Weight", weight);
+    addBreedDetail("Adaptability", breed.adaptability);
+    addBreedDetail("Intelligence", breed.intelligence);
+  } else {
+    const noInfoMessage = document.createElement("p");
+    noInfoMessage.textContent = "Breed information is not available.";
+    infoDump.appendChild(noInfoMessage);
+  }
+
+  if (imageCount === 0) {
+    const noImageMessage = document.createElement("p");
+    noImageMessage.textContent = "No images are available for this breed.";
+    infoDump.appendChild(noImageMessage);
+  }
 }
 
 async function loadBreedImages() {
@@ -117,9 +179,13 @@ async function loadBreedImages() {
       throw new Error("Cat API did not return an array of images");
     }
 
-    buildCarousel(images);
+    const imageCount = buildCarousel(images);
+    const selectedBreed = getSelectedBreed(images);
+    displayBreedInfo(selectedBreed, imageCount);
   } catch (error) {
     console.error("there was an issue loading the cat images...", error);
+    Carousel.clear();
+    displayBreedInfo(null, 0);
   }
 }
 
