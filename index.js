@@ -21,6 +21,40 @@ const API_KEY = process.env.CAT_API_KEY || "";
  *  - Each option should display text equal to the name of the breed.
  * This function should execute immediately.
  */
+async function initialLoad() {
+  try {
+    const headers = {};
+
+    // adding the api key only if there is one in the local .env file
+    if (API_KEY) {
+      headers["x-api-key"] = API_KEY;
+    }
+
+    const response = await fetch("https://api.thecatapi.com/v1/breeds", {
+      headers: headers
+    });
+
+    if (!response.ok) {
+      throw new Error(`Cat API request failed with status ${response.status}`);
+    }
+
+    const breeds = await response.json();
+
+    // clearing the dropdown before adding all of the cat breeds
+    breedSelect.innerHTML = "";
+
+    for (let i = 0; i < breeds.length; i++) {
+      const option = document.createElement("option");
+      option.value = breeds[i].id;
+      option.textContent = breeds[i].name;
+      breedSelect.appendChild(option);
+    }
+  } catch (error) {
+    console.error("there was an issue loading the cat breeds...", error);
+  }
+}
+
+initialLoad();
 
 /**
  * 2. Create an event handler for breedSelect that does the following:
