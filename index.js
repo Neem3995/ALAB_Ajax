@@ -49,6 +49,8 @@ async function initialLoad() {
       option.textContent = breeds[i].name;
       breedSelect.appendChild(option);
     }
+
+    await loadBreedImages();
   } catch (error) {
     console.error("there was an issue loading the cat breeds...", error);
   }
@@ -70,6 +72,58 @@ initialLoad();
  * - Each new selection should clear, re-populate, and restart the Carousel.
  * - Add a call to this function to the end of your initialLoad function above to create the initial carousel.
  */
+function buildCarousel(images) {
+  Carousel.clear();
+
+  for (let i = 0; i < images.length; i++) {
+    // making sure the image has everything the carousel needs
+    if (images[i].url && images[i].id) {
+      const carouselItem = Carousel.createCarouselItem(
+        images[i].url,
+        "A cat from The Cat API",
+        images[i].id
+      );
+
+      Carousel.appendCarousel(carouselItem);
+    }
+  }
+
+  Carousel.start();
+}
+
+async function loadBreedImages() {
+  try {
+    const headers = {};
+
+    if (API_KEY) {
+      headers["x-api-key"] = API_KEY;
+    }
+
+    const breedId = breedSelect.value;
+    const response = await fetch(
+      `https://api.thecatapi.com/v1/images/search?limit=10&breed_ids=${breedId}`,
+      {
+        headers: headers
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Cat API request failed with status ${response.status}`);
+    }
+
+    const images = await response.json();
+
+    if (!Array.isArray(images)) {
+      throw new Error("Cat API did not return an array of images");
+    }
+
+    buildCarousel(images);
+  } catch (error) {
+    console.error("there was an issue loading the cat images...", error);
+  }
+}
+
+breedSelect.addEventListener("change", loadBreedImages);
 
 /**
  * 3. Fork your own sandbox, creating a new one named "JavaScript Axios Lab."
