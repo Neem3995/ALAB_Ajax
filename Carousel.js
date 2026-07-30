@@ -1,7 +1,6 @@
 import * as bootstrap from "bootstrap";
-import { favourite } from "./index.js";
 
-export function createCarouselItem(imgSrc, imgAlt, imgId) {
+export function createCarouselItem(imgSrc, imgAlt, imgId, favouriteFunction) {
   const template = document.querySelector("#carouselItemTemplate");
   const clone = template.content.firstElementChild.cloneNode(true);
 
@@ -11,7 +10,7 @@ export function createCarouselItem(imgSrc, imgAlt, imgId) {
 
   const favBtn = clone.querySelector(".favourite-button");
   favBtn.addEventListener("click", () => {
-    favourite(imgId);
+    favouriteFunction(imgId);
   });
 
   return clone;

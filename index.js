@@ -83,7 +83,8 @@ function buildCarousel(images) {
       const carouselItem = Carousel.createCarouselItem(
         images[i].url,
         "A cat from The Cat API",
-        images[i].id
+        images[i].id,
+        favourite
       );
 
       Carousel.appendCarousel(carouselItem);
