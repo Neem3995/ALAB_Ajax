@@ -241,4 +241,47 @@ export async function favourite(imgId) {
   }
 }
 
+async function getFavourites() {
+  try {
+    const response = await axios.get("/favourites");
+    const favourites = response.data;
+
+    if (!Array.isArray(favourites)) {
+      throw new Error("Cat API did not return an array of favourites");
+    }
+
+    const favouriteImages = [];
+
+    // getting the image information inside each favourite
+    for (let i = 0; i < favourites.length; i++) {
+      if (favourites[i] && favourites[i].image) {
+        favouriteImages.push(favourites[i].image);
+      }
+    }
+
+    const imageCount = buildCarousel(favouriteImages);
+    infoDump.innerHTML = "";
+
+    const message = document.createElement("p");
+
+    if (imageCount > 0) {
+      message.textContent = `Showing ${imageCount} saved favourites.`;
+    } else {
+      message.textContent = "You do not have any saved favourites yet.";
+    }
+
+    infoDump.appendChild(message);
+  } catch (error) {
+    console.error("there was an issue loading the favourites...", error);
+    Carousel.clear();
+    infoDump.innerHTML = "";
+
+    const message = document.createElement("p");
+    message.textContent = "The saved favourites could not be loaded.";
+    infoDump.appendChild(message);
+  }
+}
+
+getFavouritesBtn.addEventListener("click", getFavourites);
+
 initialLoad();
