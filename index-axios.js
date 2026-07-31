@@ -204,7 +204,41 @@ async function loadBreedImages() {
 breedSelect.addEventListener("change", loadBreedImages);
 
 export async function favourite(imgId) {
-  // favourite toggle will be added in a later chunk
+  try {
+    const favouritesResponse = await axios.get("/favourites");
+    const favourites = favouritesResponse.data;
+
+    if (!Array.isArray(favourites)) {
+      throw new Error("Cat API did not return an array of favourites");
+    }
+
+    let existingFavourite = null;
+
+    // checking if this image is already in the favourites
+    for (let i = 0; i < favourites.length; i++) {
+      if (favourites[i].image_id === imgId) {
+        existingFavourite = favourites[i];
+        break;
+      }
+
+      if (favourites[i].image && favourites[i].image.id === imgId) {
+        existingFavourite = favourites[i];
+        break;
+      }
+    }
+
+    if (existingFavourite) {
+      await axios.delete(`/favourites/${existingFavourite.id}`);
+      console.log("favourite removed");
+    } else {
+      await axios.post("/favourites", {
+        image_id: imgId
+      });
+      console.log("favourite added");
+    }
+  } catch (error) {
+    console.error("there was an issue updating the favourite...", error);
+  }
 }
 
 initialLoad();
