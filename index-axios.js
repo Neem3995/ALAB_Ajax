@@ -81,6 +81,10 @@ async function initialLoad() {
     const response = await axios.get("/breeds");
     breedList = response.data;
 
+    if (!Array.isArray(breedList)) {
+      throw new Error("Cat API did not return an array of breeds");
+    }
+
     breedSelect.innerHTML = "";
 
     for (let i = 0; i < breedList.length; i++) {
@@ -93,6 +97,14 @@ async function initialLoad() {
     await loadBreedImages();
   } catch (error) {
     console.error("there was an issue loading the cat breeds...", error);
+    breedSelect.innerHTML = "";
+
+    const option = document.createElement("option");
+    option.textContent = "Breeds could not be loaded";
+    breedSelect.appendChild(option);
+
+    Carousel.clear();
+    infoDump.textContent = "The cat breeds could not be loaded.";
   }
 }
 
@@ -237,7 +249,16 @@ export async function favourite(imgId) {
       console.log("favourite added");
     }
   } catch (error) {
-    console.error("there was an issue updating the favourite...", error);
+    if (error.response) {
+      console.error(
+        `there was an issue updating the favourite... status ${error.response.status}`
+      );
+    } else {
+      console.error(
+        "there was an issue updating the favourite...",
+        error.message
+      );
+    }
   }
 }
 

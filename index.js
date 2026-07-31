@@ -41,6 +41,10 @@ async function initialLoad() {
 
     breedList = await response.json();
 
+    if (!Array.isArray(breedList)) {
+      throw new Error("Cat API did not return an array of breeds");
+    }
+
     // clearing the dropdown before adding all of the cat breeds
     breedSelect.innerHTML = "";
 
@@ -54,6 +58,14 @@ async function initialLoad() {
     await loadBreedImages();
   } catch (error) {
     console.error("there was an issue loading the cat breeds...", error);
+    breedSelect.innerHTML = "";
+
+    const option = document.createElement("option");
+    option.textContent = "Breeds could not be loaded";
+    breedSelect.appendChild(option);
+
+    Carousel.clear();
+    infoDump.textContent = "The cat breeds could not be loaded.";
   }
 }
 
